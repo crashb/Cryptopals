@@ -4,17 +4,17 @@
 import base64
 from Crypto.Cipher import AES
 
-# decrypts AES cipher.  arguments are cipherBytes (bytearray) and key (bytearray)
-# returns bytearray in plaintext
+# decrypts AES cipher in ECB mode.  arguments are cipherBytes (bytes) and key (bytes)
+# CANNOT use mutable type bytearray; only byte strings can be passed to C code
+# returns plaintext (bytes)
 def decryptAES(cipherBytes, keyBytes):
 	cipher = AES.new(keyBytes, AES.MODE_ECB)
 	return cipher.decrypt(cipherBytes)
 
 if __name__ == "__main__":
-	key = "YELLOW SUBMARINE"
 	with open('Challenge7Data.txt', 'r') as myfile:
 		encryptedBytes = base64.b64decode(''.join(myfile.read().strip().split('\n')))
-	keyBytes = byteArray(key)
-	print("Decrypting with key " + key + "...")
+	keyBytes = b"YELLOW SUBMARINE"
+	print("Decrypting with key " + keyBytes.decode("ascii") + "...")
 	plainBytes = decryptAES(encryptedBytes, keyBytes)
 	print("Plaintext: " + plainBytes.decode("ascii"))
