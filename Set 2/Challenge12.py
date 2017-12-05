@@ -1,5 +1,5 @@
 # solution to http://cryptopals.com/sets/2/challenges/12
-# decrypts an unknown string appended to a chosen plaintext
+# decrypts an unknown string appended to a chosen plaintext, encrypted in AES ECB mode
 
 import base64
 from Crypto.Cipher import AES
