@@ -12,9 +12,9 @@ def decryptAES_ECB(cipherBytes, keyBytes):
 	
 # encrypts AES cipher in ECB mode.  arguments are plainBytes (bytes) and key (bytes)
 # returns ciphertext (bytes)
-def encryptAES_ECB(cipherBytes, keyBytes):
+def encryptAES_ECB(plainBytes, keyBytes):
 	cipher = AES.new(keyBytes, AES.MODE_ECB)
-	return cipher.encrypt(cipherBytes)
+	return cipher.encrypt(plainBytes)
 
 # decrypts AES cipher in CBC mode.  chains together AES_ECB decryptions and XORs blocks together
 # more information: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_Block_Chaining_.28CBC.29

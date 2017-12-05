@@ -5,12 +5,12 @@ import Challenge10
 from random import randint
 
 # generates a random sequence of bytes.  length is determined by length argument (int).
-# returns random key (bytearray)
+# returns randomBytes (bytearray)
 def randomByteGen(length):
-	key = bytearray()
+	randomBytes = bytearray()
 	for i in range(0, length):
-		key.append(randint(0, 255))
-	return key
+		randomBytes.append(randint(0, 255))
+	return randomBytes
 
 # padBytes takes a bytearray of bytes to pad, as well as a block size to pad to
 # returns a bytearray of padded bytes
