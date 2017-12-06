@@ -18,7 +18,7 @@ def padBytes(bytesToPad, blockSize):
 	numPadBytes = blockSize - (len(bytesToPad) % blockSize)
 	paddedBytes = bytesToPad
 	for i in range(0, numPadBytes):
-		paddedBytes.append(4)
+		paddedBytes.append(numPadBytes)
 	return paddedBytes
 	
 # pads inputBytes (bytearray) on both sides with 5-10 random bytes, then encrypts inputBytes with a randomly generated 16-byte key.  

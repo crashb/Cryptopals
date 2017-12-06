@@ -22,7 +22,7 @@ def padBytes(bytesToPad, blockSize):
 	numPadBytes = blockSize - (len(bytesToPad) % blockSize)
 	paddedBytes = bytesToPad
 	for i in range(0, numPadBytes):
-		paddedBytes.append(4)
+		paddedBytes.append(numPadBytes)
 	return paddedBytes
 	
 # encrypts AES cipher in ECB mode.  arguments are plainBytes (bytes) and key (bytes)

@@ -7,10 +7,10 @@ def padBytes(bytesToPad, blockSize):
 	numPadBytes = blockSize - (len(bytesToPad) % blockSize)
 	paddedBytes = bytesToPad
 	for i in range(0, numPadBytes):
-		paddedBytes.append(4)
+		paddedBytes.append(numPadBytes)
 	return paddedBytes
 
 if __name__ == "__main__":
-	someBytes = bytearray("YELLOW SUBMARINE", "ascii")
-	paddedBytes = padBytes(someBytes, 20)
+	someBytes = bytearray("yellow submarine", "ascii")
+	paddedBytes = padBytes(someBytes, 16)
 	print("Padded bytes: " + str(paddedBytes))
