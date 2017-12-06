@@ -1,6 +1,7 @@
 # solution to http://cryptopals.com/sets/2/challenges/13
 # injection into ciphered bytes, encrypted in AES ECB mode
 
+import Challenge09
 from Crypto.Cipher import AES
 from random import randint
 
@@ -16,15 +17,6 @@ def randomByteGen(length):
 blockLength = 16
 # generate unknown random key as a global
 randomKey = randomByteGen(blockLength)
-
-# padBytes takes a bytearray of bytes to pad, as well as a block size to pad to
-# returns a bytearray of padded bytes
-def padBytes(bytesToPad, blockSize):
-	numPadBytes = blockSize - (len(bytesToPad) % blockSize)
-	paddedBytes = bytesToPad
-	for i in range(0, numPadBytes):
-		paddedBytes.append(numPadBytes)
-	return paddedBytes
 	
 # decrypts AES cipher in ECB mode.  arguments are cipherBytes (bytes) and key (bytes)
 # returns plaintext (bytes)
@@ -45,7 +37,7 @@ def getEncodedProfile(emailAddress):
 	cleanedEmail = emailAddress.replace("&", "").replace("=", "")
 	encodedPlainString = "email=" + cleanedEmail + "&uid=10&role=user"
 	# encrypt encoded plaintext string to encoded ciphertext bytes
-	encodedPlainBytes = padBytes(bytearray(encodedPlainString, "ascii"), blockLength)
+	encodedPlainBytes = Challenge09.padBytes(bytearray(encodedPlainString, "ascii"), blockLength)
 	encodedCipherBytes = encryptAES_ECB(bytes(encodedPlainBytes), bytes(randomKey))
 	return encodedCipherBytes
 
@@ -54,9 +46,10 @@ def getEncodedProfile(emailAddress):
 def parseKeyValue(encodedCipherBytes):
 	# decrypt encoded ciphertext bytes to encoded plaintext string
 	encodedPlainBytes = decryptAES_ECB(encodedCipherBytes, bytes(randomKey))
+	# remove padding from end of bytes, and split into list of key/value pair entries
+	encodedPlainBytes = Challenge09.unpadBytes(encodedPlainBytes, blockLength)
 	encodedString = encodedPlainBytes.decode("ascii")
-	# remove padding from end of string, and split into list of key/value pair entries
-	pairList = encodedString.split("\x04")[0].split("&")
+	pairList = encodedString.split("&")
 	entries = {}
 	for entry in pairList:
 		key = entry.split("=")[0]
@@ -112,8 +105,9 @@ def getProfilePostfix():
 	# now we have started a new block in the plaintext, so we add "admin" along
 	# with however much padding is required to complete the next block
 	suppliedEmail += "admin"
-	while ((len("email=") + (len(suppliedEmail))) % blockLength) != 0:
-		suppliedEmail += "\x04"
+	suppliedEmailBytes = bytearray(suppliedEmail, "ascii")
+	suppliedEmailBytes = Challenge09.padBytes(suppliedEmailBytes, len(suppliedEmailBytes) - len("admin") + blockLength)
+	suppliedEmail = suppliedEmailBytes.decode("ascii")
 	# the target block of the ciphertext is the second one, which consists of "admin" and padding
 	alignedBytes = getEncodedProfile(suppliedEmail)
 	postfixBytes = alignedBytes[blockLength:2*blockLength]
