@@ -89,7 +89,7 @@ def getPrepadBytes():
 	print("Error: prepad bytes greater than block length")
 	return [-1, -1]
 
-# call encryption process with a chosen plaintext that is exactly one byte short
+# call encryption process with a chosen plaintext whose purpose is to move the next unknown byte to the end of a controlled block
 # called with number of prepad bytes (int), the block number we are looking at (int), and the byte we are looking at within that block (int)
 # returns the first block (bytearray)
 def getShortenedInputBlock(prepadBytes, blockNo, byteNo):

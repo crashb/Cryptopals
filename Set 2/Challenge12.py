@@ -89,7 +89,7 @@ def detectProcessMode(blockLength):
 	print("Error: not able to detect ECB mode")
 	return "Not found"
 
-# 3. call encryption process with a chosen plaintext that is exactly one byte short
+# 3. call encryption process with a chosen plaintext whose purpose is to move the next unknown byte to the end of a controlled block
 # called with block length (int), the block number we are looking at (int), and the byte we are looking at within that block (int)
 # returns the first block (bytearray)
 def getShortenedInputBlock(blockLength, blockNo, byteNo):
