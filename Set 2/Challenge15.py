@@ -24,7 +24,7 @@ def verifyPadding(paddedBytes, blockSize):
 # unpadBytes takes a bytearray of padded bytes, verifies it has valid padding, and strips the padding off
 # returns unpadded bytes (bytearray) - throws exception if not padded correctly
 def unpadBytes(bytesToUnpad, blockSize):
-	verifyPadding(invalidBytes, blockSize)
+	verifyPadding(bytesToUnpad, blockSize)
 	numToUnpad = bytesToUnpad[-1]
 	unpadded = bytearray(bytesToUnpad)
 	for i in range(0, numToUnpad):

@@ -29,11 +29,18 @@ def getEncodedProfile(inputString):
 	encodedPlainBytes = Challenge15.padBytes(bytearray(encodedPlainString, "ascii"), blockLength)
 	encodedCipherBytes = Challenge10.encryptAES_CBC(bytes(encodedPlainBytes), randomKey, bytes(randomIV))
 	return encodedCipherBytes
+
+# decrypts provided bytes with CBC, removes padding
+# returns encoded plaintext (bytes)
+def decryptProfile(cipherBytes):
+	plainBytes = Challenge10.decryptAES_CBC(bytes(cipherBytes), randomKey, bytes(randomIV))
+	plainBytes = Challenge15.unpadBytes(plainBytes, blockLength)
+	return plainBytes
 	
 # given ciphered encoded bytes, decrypt them and check for string ";admin=true;"
 # returns boolean
 def checkAdmin(cipherBytes):
-	plainBytes = Challenge10.decryptAES_CBC(bytes(cipherBytes), randomKey, bytes(randomIV))
+	plainBytes = decryptProfile(cipherBytes)
 	if bytearray(";admin=true;", "ascii") in plainBytes:
 		print("Admin entry found!")
 		return True
@@ -47,7 +54,11 @@ def checkAdmin(cipherBytes):
 #       below this line: solving the problem
 
 if __name__ == "__main__":
-	inputString = ";admin=true;"
+	inputString = "butts"
+	print("Creating profile with input string \"" + inputString + "\"...")
 	encodedCipherBytes = getEncodedProfile(inputString)
 	print("Encoded ciphertext bytes: " + str(encodedCipherBytes))
 	checkAdmin(encodedCipherBytes)
+	encodedPlainBytes = decryptProfile(encodedCipherBytes)
+	print("Encoded plaintext bytes: " + str(encodedPlainBytes))
+	
