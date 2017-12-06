@@ -2,7 +2,7 @@
 # implementation of byte padding
 
 # padBytes takes a bytearray of bytes to pad, as well as a block size to pad to
-# returns a bytearray of padded bytes
+# returns padded bytes (bytearray)
 def padBytes(bytesToPad, blockSize):
 	numPadBytes = blockSize - (len(bytesToPad) % blockSize)
 	paddedBytes = bytesToPad
@@ -10,7 +10,18 @@ def padBytes(bytesToPad, blockSize):
 		paddedBytes.append(numPadBytes)
 	return paddedBytes
 
+# unpadBytes takes a bytearray of padded bytes and strips the padding off
+# returns unpadded bytes (bytearray)
+def unpadBytes(bytesToUnpad, blockSize):
+	numToUnpad = bytesToUnpad[-1]
+	unpadded = bytearray(bytesToUnpad)
+	for i in range(0, numToUnpad):
+		unpadded = unpadded[:-1]
+	return unpadded
+	
 if __name__ == "__main__":
-	someBytes = bytearray("yellow submarine", "ascii")
+	someBytes = bytearray("yellow bubmarin", "ascii")
 	paddedBytes = padBytes(someBytes, 16)
 	print("Padded bytes: " + str(paddedBytes))
+	unpaddedBytes = unpadBytes(paddedBytes, 16)
+	print("Unpadded bytes: " + str(unpaddedBytes))
