@@ -5,7 +5,7 @@
 # returns padded bytes (bytearray)
 def padBytes(bytesToPad, blockSize):
 	numPadBytes = blockSize - (len(bytesToPad) % blockSize)
-	paddedBytes = bytesToPad
+	paddedBytes = bytearray(bytesToPad)
 	for i in range(0, numPadBytes):
 		paddedBytes.append(numPadBytes)
 	return paddedBytes

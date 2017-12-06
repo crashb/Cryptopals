@@ -60,7 +60,7 @@ def getEmptyIV(length):
 # XORs two bytearrays
 # returns a bytearray that is the result of the operation
 def fixedXOR(buffer1Bytes, buffer2Bytes):
-	xorResultBytes = buffer1Bytes
+	xorResultBytes = bytearray(buffer1Bytes)
 	for index, byte in enumerate(buffer2Bytes):
 		xorResultBytes[index] ^= byte
 	return xorResultBytes
