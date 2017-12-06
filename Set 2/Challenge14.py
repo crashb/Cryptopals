@@ -2,6 +2,7 @@
 # decrypts an unknown string of target-bytes, when the following format is followed:
 # AES-128-ECB(random-prefix || attacker-controlled || target-bytes, random-key)
 
+import Challenge09
 import base64
 from Crypto.Cipher import AES
 from random import randint
@@ -19,15 +20,6 @@ blockLength = 16
 # generate unknown random key and random prefix as a global
 randomKey = randomByteGen(blockLength)
 randomPrefix = randomByteGen(randint(0, 255))
-
-# padBytes takes a bytearray of bytes to pad, as well as a block size to pad to
-# returns a bytearray of padded bytes
-def padBytes(bytesToPad, blockSize):
-	numPadBytes = blockSize - (len(bytesToPad) % blockSize)
-	paddedBytes = bytesToPad
-	for i in range(0, numPadBytes):
-		paddedBytes.append(numPadBytes)
-	return paddedBytes
 	
 # encrypts AES cipher in ECB mode.  arguments are plainBytes (bytes) and key (bytes)
 # returns ciphertext (bytes)
@@ -47,7 +39,7 @@ def encryptionProcess(givenBytes):
 	# append unknown plaintext bytes to plaintext
 	with open('Challenge14Data.txt', 'r') as myfile:
 		plainBytes += base64.b64decode(''.join(myfile.read().strip().split('\n')))
-	plainBytes = padBytes(plainBytes, len(randomKey))
+	plainBytes = Challenge09.padBytes(plainBytes, len(randomKey))
 	cipherBytes = encryptAES_ECB(bytes(plainBytes), bytes(randomKey))
 	return cipherBytes
 
@@ -148,9 +140,12 @@ def getPlaintextBlock(prepadBytes, blockNo, sourceBlockNo, lastPlainBlock):
 		shortenedInputBlock = getShortenedInputBlock(prepadBytes, blockNo, len(plainBlock))
 		# print("Result from shortened block: " + str(shortenedInputBlock) + "(Length: " + str(len(shortenedInputBlock)) + ")")
 		bytePossi = getPossibilities(prepadBytes, sourceBlockNo, plainBlock, lastPlainBlock)
-		plainByte = bytePossi[shortenedInputBlock]
-		# print("Plaintext byte: " + str(plainByte) + " (ASCII: " + chr(plainByte) + ")")
-		plainBlock.append(plainByte)
+		try:
+			plainByte = bytePossi[shortenedInputBlock]
+			plainBlock.append(plainByte)
+		# if we hit a key error, either something went wrong, or we have hit the padding at the end of the message
+		except KeyError:
+			break
 	return plainBlock
 
 # find the plaintext message hidden in the encryptionProcess function, given the number of prepad bytes (int)
