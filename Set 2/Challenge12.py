@@ -2,6 +2,7 @@
 # decrypts an unknown string appended to a chosen plaintext, encrypted in AES ECB mode
 
 import base64
+import Challenge09
 from Crypto.Cipher import AES
 from random import randint
 
@@ -15,15 +16,6 @@ def randomByteGen(length):
 	
 # generate unknown random key as a global
 randomKey = randomByteGen(16)
-
-# padBytes takes a bytearray of bytes to pad, as well as a block size to pad to
-# returns a bytearray of padded bytes
-def padBytes(bytesToPad, blockSize):
-	numPadBytes = blockSize - (len(bytesToPad) % blockSize)
-	paddedBytes = bytesToPad
-	for i in range(0, numPadBytes):
-		paddedBytes.append(numPadBytes)
-	return paddedBytes
 	
 # encrypts AES cipher in ECB mode.  arguments are plainBytes (bytes) and key (bytes)
 # returns ciphertext (bytes)
@@ -41,7 +33,7 @@ def encryptionProcess(givenBytes):
 	# append unknown plaintext bytes to plaintext
 	with open('Challenge12Data.txt', 'r') as myfile:
 		plainBytes += base64.b64decode(''.join(myfile.read().strip().split('\n')))
-	plainBytes = padBytes(plainBytes, len(randomKey))
+	plainBytes = Challenge09.padBytes(plainBytes, len(randomKey))
 	cipherBytes = encryptAES_ECB(bytes(plainBytes), bytes(randomKey))
 	return cipherBytes
 
@@ -143,9 +135,13 @@ def getPlaintextBlock(blockLength, blockNo, lastPlainBlock):
 		shortenedInputBlock = getShortenedInputBlock(blockLength, blockNo, len(plainBlock))
 		# print("Result from shortened block: " + str(shortenedInputBlock) + "(Length: " + str(len(shortenedInputBlock)) + ")")
 		bytePossi = getPossibilities(blockLength, plainBlock, lastPlainBlock)
-		plainByte = bytePossi[shortenedInputBlock]
-		# print("Plaintext byte: " + str(plainByte) + " (ASCII: " + chr(plainByte) + ")")
-		plainBlock.append(plainByte)
+		try:
+			plainByte = bytePossi[shortenedInputBlock]
+			plainBlock.append(plainByte)
+		# if we hit a key error, either something went wrong, or we have hit the padding at the end of the message
+		except KeyError:
+			break
+	# print("Plaintext block: " + str(plainBlock))
 	return plainBlock
 
 # find the plaintext message hidden in the encryptionProcess function, given the block length (int)

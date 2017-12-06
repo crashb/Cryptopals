@@ -1,6 +1,7 @@
 # solution to http://cryptopals.com/sets/2/challenges/11
 # detects between ECB and CBC encryption modes
 
+import Challenge09
 import Challenge10
 from random import randint
 
@@ -11,15 +12,6 @@ def randomByteGen(length):
 	for i in range(0, length):
 		randomBytes.append(randint(0, 255))
 	return randomBytes
-
-# padBytes takes a bytearray of bytes to pad, as well as a block size to pad to
-# returns a bytearray of padded bytes
-def padBytes(bytesToPad, blockSize):
-	numPadBytes = blockSize - (len(bytesToPad) % blockSize)
-	paddedBytes = bytesToPad
-	for i in range(0, numPadBytes):
-		paddedBytes.append(numPadBytes)
-	return paddedBytes
 	
 # pads inputBytes (bytearray) on both sides with 5-10 random bytes, then encrypts inputBytes with a randomly generated 16-byte key.  
 # half of the time, encrypts in ECB mode; the other half of the time, encrypts in CBC mode.
@@ -29,7 +21,7 @@ def encryption_oracle(inputBytes):
 	inputBytes = randomByteGen(randint(5, 10)) + inputBytes
 	inputBytes += randomByteGen(randint(5, 10))
 	# pad inputBytes to have an even number of 16-byte blocks
-	padBytes(inputBytes, 16)
+	Challenge09.padBytes(inputBytes, 16)
 	# generate random key
 	randomKey = randomByteGen(16)
 	# flip a coin to encrypt with ECB or CBC mode
