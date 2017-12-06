@@ -12,7 +12,7 @@ def randomByteGen(length):
 		randomBytes.append(randint(0, 255))
 	return randomBytes
 
-# set blockLength to 16 for now
+# set blockLength to 16 - assume it is known
 blockLength = 16
 # generate unknown random key as a global
 randomKey = randomByteGen(blockLength)
