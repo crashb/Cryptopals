@@ -1,5 +1,5 @@
 # solution to http://cryptopals.com/sets/2/challenges/9
-# implementation of byte padding
+# implementation of PKCS#7 padding
 
 # padBytes takes a bytearray of bytes to pad, as well as a block size to pad to
 # returns padded bytes (bytearray)
