@@ -14,7 +14,7 @@ def padBytes(bytesToPad, blockSize):
 # returns nothing if padded correctly, and throws exception if not
 def verifyPadding(paddedBytes, blockSize):
 	numPadBytes = paddedBytes[-1]
-	if numPadBytes not in range(0, blockSize):
+	if numPadBytes not in range(1, blockSize+1):
 		raise ValueError("The final byte's value " + str(numPadBytes) + " is greater than the block size " + str(blockSize))
 	for i in range(0, numPadBytes):
 		if paddedBytes[-(i+1)] != numPadBytes:
