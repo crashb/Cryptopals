@@ -1,7 +1,6 @@
 # from Set 2/Challenge 10
 # implementation of AES CBC mode
 
-import base64
 from Crypto.Cipher import AES
 
 # decrypts AES cipher in ECB mode.  arguments are cipherBytes (bytes) and key (bytes)

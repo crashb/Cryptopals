@@ -28,7 +28,7 @@ def getCiphertext(fileName):
 		for line in myfile:
 			plainList.append(line.strip())
 	plainText = random.choice(plainList)
-	plainBytes = base64.b64decode(''.join(plainText.strip().split('\n')))
+	plainBytes = base64.b64decode(plainText)
 	plainBytes = paddingUtils.padBytes(plainBytes, blockLength)
 	cipherBytes = AESUtils.encryptAES_CBC(plainBytes, randomKey, randomIV)
 	return cipherBytes
