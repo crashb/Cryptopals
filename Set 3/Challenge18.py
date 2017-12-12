@@ -8,12 +8,6 @@ from Crypto.Cipher import AES
 
 # assume block length is 16
 blockLength = 16
-
-# decrypts AES cipher in ECB mode.  arguments are cipherBytes (bytes) and key (bytes)
-# returns plaintext (bytes)
-def decryptAES_ECB(cipherBytes, keyBytes):
-	cipher = AES.new(keyBytes, AES.MODE_ECB)
-	return cipher.decrypt(cipherBytes)
 	
 # encrypts AES cipher in ECB mode.  arguments are plainBytes (bytes) and key (bytes)
 # returns ciphertext (bytes)
@@ -28,7 +22,9 @@ def streamXOR(dest, source):
 	for i in range(0, len(dest)):
 		resultBytes[i] ^= source[i]
 	return resultBytes
-	
+
+# encrypts/decrypts AES in CTR mode.  the operation is symmetrical for encryption and decryption.
+# returns bytearray
 def cryptAES_CTR(startBytes, keyBytes, nonce):
 	numBlocks = math.ceil(len(startBytes) / blockLength)
 	counter = 0
