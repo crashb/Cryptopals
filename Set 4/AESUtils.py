@@ -2,6 +2,8 @@
 # implementation of AES CBC mode
 
 from Crypto.Cipher import AES
+import struct
+import math
 
 # getEmptyIV is a function to return an empty initialization vector of a given length (int)
 # returns bytearray of [0, 0, 0, ...]
@@ -26,6 +28,8 @@ def streamXOR(dest, source):
 	for i in range(0, len(dest)):
 		resultBytes[i] ^= source[i]
 	return resultBytes
+	
+blockLength = 16
 
 # decrypts AES cipher in ECB mode.  arguments are cipherBytes (bytes) and key (bytes)
 # returns plaintext (bytes)
@@ -71,14 +75,12 @@ def encryptAES_CBC(plainBytes, keyBytes, IVBytes):
 		xorBytes = encryptedBlock
 		encrypted += encryptedBlock
 	return encrypted
-
-# encrypts/decrypts AES in CTR mode.  the operation is symmetrical for encryption and decryption.
-# returns bytearray
-def cryptAES_CTR(startBytes, keyBytes, nonce):
-	numBlocks = math.ceil(len(startBytes) / blockLength)
-	counter = 0
+	
+# get keystream to be used by AES in CTR mode
+# returns keytream (bytearray)
+def getCTRKeystream(numBlocks, firstBlock, keyBytes, nonce):
+	counter = firstBlock
 	keyStream = bytearray()
-	endBytes = bytearray()
 	nonceBytes = struct.pack('<Q', nonce)
 	for i in range(0, numBlocks):
 		# pack counter int into 64-bit little endian format
@@ -87,6 +89,13 @@ def cryptAES_CTR(startBytes, keyBytes, nonce):
 		counterBytes = bytearray(nonceBytes) + counterBytes
 		keyStream += encryptAES_ECB(bytes(counterBytes), bytes(keyBytes))
 		counter += 1
+	return keyStream
+
+# encrypts/decrypts AES in CTR mode.  the operation is symmetrical for encryption and decryption.
+# returns bytearray
+def cryptAES_CTR(startBytes, keyBytes, nonce):
+	numBlocks = math.ceil(len(startBytes) / blockLength)
+	keyStream = getCTRKeystream(numBlocks, 0, keyBytes, nonce)
 	# xor our fully generated keyStream against startBytes all in one go
 	resultBytes = streamXOR(startBytes, keyStream)
 	return resultBytes
