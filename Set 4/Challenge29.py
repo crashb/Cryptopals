@@ -13,7 +13,7 @@ def randomByteGen(length):
 		randomBytes.append(random.randint(0, 255))
 	return randomBytes
 
-randomKey = randomByteGen(10) #TODO
+randomKey = randomByteGen(random.randint(10, 14))
 
 # given key and message bytearrays, uses sha-1 to generate a keyed MAC
 # returns MAC (hex string)
@@ -44,7 +44,6 @@ def forgeMAC(initialMessage, newMessage):
 	c = int(initialMAC[16:24], 16)
 	d = int(initialMAC[24:32], 16)
 	e = int(initialMAC[32:40], 16)
-	padding = getPadding(len(initialMessage) + 10) #TODO
 	# calculate the amount of bytes we need to skip ahead
 	msgLength = len(initialMessage) - len(initialMessage) % 64 + 64
 	# forge the mac with the new parameters
@@ -54,10 +53,13 @@ def forgeMAC(initialMessage, newMessage):
 if __name__ == "__main__":
 	message = b"comment1=cooking MCs;userdata=foo;comment2=like a pound of bacon"
 	print("Initial message: " + str(message))
-	padding = getPadding(len(message) + 10) #TODO
-	# SHA1Utils.sha1(randomKey + message + padding) # debug
 	toAdd = b";admin=true"
 	print("Adding the following: " + str(toAdd))
 	
 	print("Forged MAC: " + forgeMAC(message, toAdd))
-	print("Real MAC:   " + SHA1Utils.sha1(randomKey + message + padding + toAdd))
+	print("Should match with *one* of the real MACs below:")
+	
+	# bruteforce key lengths for different paddings, to show what the real MAC could look like
+	for i in range(10, 15):
+		padding = getPadding(len(message) + i)
+		print("Real MAC " + str(i-9) + ": " + SHA1Utils.sha1(randomKey + message + padding + toAdd))
