@@ -20,4 +20,5 @@ def getMAC(key, message):
 if __name__ == "__main__":
 	key = randomByteGen(random.randint(10, 20))
 	message = b"abc, 123"
+	print("MAC for message " + str(message) + " with key " + str(key) + ":")
 	print(getMAC(key, message))
