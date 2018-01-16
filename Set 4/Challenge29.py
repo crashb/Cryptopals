@@ -20,7 +20,7 @@ randomKey = randomByteGen(random.randint(10, 14))
 def getMAC(key, message):
 	return SHA1Utils.sha1(key + message)
 	
-# pad message according to sha-1 algorithm
+# get padding of message according to sha-1 algorithm
 # returns glue message (bytearray)
 def getPadding(message_byte_length):
 	padding = bytearray()
@@ -38,6 +38,7 @@ def getPadding(message_byte_length):
 # returns forged MAC (hex string)
 def forgeMAC(initialMessage, newMessage):
 	initialMAC = getMAC(randomKey, initialMessage)
+	print("Initial MAC: " + initialMAC)
 	# break sha-1 hash into registers
 	a = int(initialMAC[0:8],   16)
 	b = int(initialMAC[8:16],  16)
@@ -56,10 +57,7 @@ if __name__ == "__main__":
 	toAdd = b";admin=true"
 	print("Adding the following: " + str(toAdd))
 	
-	print("Forged MAC: " + forgeMAC(message, toAdd))
-	print("Should match with *one* of the real MACs below:")
-	
-	# bruteforce key lengths for different paddings, to show what the real MAC could look like
-	for i in range(10, 15):
-		padding = getPadding(len(message) + i)
-		print("Real MAC " + str(i-9) + ": " + SHA1Utils.sha1(randomKey + message + padding + toAdd))
+	print("Forged MAC:  " + forgeMAC(message, toAdd))
+	print("Forged MAC should match with the real MAC:")
+	padding = getPadding(len(message) + len(randomKey))
+	print("Real MAC:    " + SHA1Utils.sha1(randomKey + message + padding + toAdd))
