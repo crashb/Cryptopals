@@ -1,5 +1,5 @@
-# solution to http://cryptopals.com/sets/5/challenges/37
-# Break SRP with a zero key
+# solution to http://cryptopals.com/sets/5/challenges/38
+# Offline dictionary attack on simplified SRP
 
 import random
 import hashlib
@@ -59,62 +59,24 @@ class clientSim:
 		self.a = random.randint(0, self.N - 1)
 		self.A = pow(self.g, self.a, self.N)
 		self.server.A = self.A
-	def uCalc(self):
-		# calculate and store u value
-		uH = SHA256(str(self.A) + str(self.B))
-		self.u = int(uH, 16)
 	def KCalc(self):
 		# calculate and store K value
 		xH = SHA256(str(self.salt) + self.P)
 		x = int(xH, 16)
-		S = pow(self.B - self.k * pow(self.g, x, self.N), self.a + self.u * x, self.N)
+		S = pow(self.B, self.a + self.u * x, self.N)
 		self.K = SHA256(str(S))
 	def sendHMAC(self):
 		# compute HMAC and send to server
 		self.hmac = HMAC_SHA256(self.K, self.salt)
 		self.server.clientHMAC = self.hmac
-		
-# the modified version of our client that sends A = 0
-class clientSimZK(clientSim):
-	def sendA(self):
-		# set A value to 0 and send to server
-		self.A = 0
-		self.server.A = self.A
-	def KCalc(self):
-		# since we set A = 0, the server will calculate S to be 0
-		S = 0
-		self.K = SHA256(str(S))
-		
-# the modified version of our client that sends A = N
-class clientSim1N(clientSim):
-	def sendA(self):
-		# set A value to N and send to server
-		self.A = self.N
-		self.server.A = self.A
-	def KCalc(self):
-		# since we set A = N, the server will calculate S to be 0
-		S = 0
-		self.K = SHA256(str(S))
-		
-# the modified version of our client that sends A = 2N
-class clientSim2N(clientSim):
-	def sendA(self):
-		# set A value to 2N and send to server
-		self.A = self.N * 2
-		self.server.A = self.A
-	def KCalc(self):
-		# since we set A = 2N, the server will calculate S to be 0
-		S = 0
-		self.K = SHA256(str(S))
-		
+
 # a class representing our server
-# checks for valid password
 class serverSim:
 	def __init__(self):
 		# setup valid accounts on server
 		self.logins = {}
 		self.logins["me@me.me"] = "my password"
-		self.logins["admin"] = "G4epBUZ8gkGM"
+		self.logins["admin"] = "pikachu" # easy to brute-force
 	def setup(self):
 		# store N, g, k, I
 		self.N = N
@@ -132,16 +94,14 @@ class serverSim:
 		x = int(xH, 16)
 		self.v = pow(self.g, x, self.N)
 	def sendB(self):
-		# generate private b and public B
+		# generate private b, public B, random u
 		self.b = random.randint(0, self.N - 1)
-		self.B = (self.k*self.v) + pow(self.g, self.b, self.N)
-		# send salt and B to client
+		self.B = pow(self.g, self.b, self.N)
+		self.u = random.getrandbits(128)
+		# send salt, B, and u to client
 		self.client.salt = self.salt
 		self.client.B = self.B
-	def uCalc(self):
-		# calculate and store u value
-		uH = SHA256(str(self.A) + str(self.B))
-		self.u = int(uH, 16)
+		self.client.u = self.u
 	def KCalc(self):
 		# calculate and store K value
 		S = pow(self.A * pow(self.v, self.u, self.N), self.b, self.N)
@@ -152,6 +112,44 @@ class serverSim:
 			print("HMAC valid!")
 		else:
 			print("HMAC invalid!")
+			
+# a class representing our MITM - impersonating our server
+class middleSim:
+	def setup(self):
+		# store N, g, k, I
+		self.N = N
+		self.g = g
+		self.k = k
+		# we don't know the password to begin with, so we can't get v
+	def sendB(self):
+		# set arbitrary salt, b, and u
+		self.salt = 1
+		self.b = 2
+		self.B = pow(self.g, self.b, self.N)
+		self.u = 3
+		# send arbitrary B, U, and salt to client
+		self.client.salt = self.salt
+		self.client.B = self.B
+		self.client.u = self.u
+	def bruteforceHMAC(self):
+		f = open('Wordlist.txt', 'r')
+		for l in f.readlines():
+			line = l.strip()
+			# calculate v
+			xH = SHA256(str(self.salt) + line)
+			x = int(xH, 16)
+			self.v = pow(self.g, x, self.N)
+			# calculate K
+			S = pow(self.A * pow(self.v, self.u, self.N), self.b, self.N)
+			self.K = SHA256(str(S))
+			# calculate HMAC
+			self.serverHMAC = HMAC_SHA256(self.K, self.salt)
+			if self.serverHMAC == self.clientHMAC:
+				print("Password cracked: " + line)
+				return
+	
+		print("Password could not be cracked with the provided wordlist!")
+		return
 	
 # execute the SRP protocol
 def SRPProtocol(client, server, email, password):
@@ -159,12 +157,20 @@ def SRPProtocol(client, server, email, password):
 	server.setup()
 	client.sendA()
 	server.sendB()
-	client.uCalc()
-	server.uCalc()
 	client.KCalc()
 	server.KCalc()
 	client.sendHMAC()
 	server.checkHMAC()
+	
+# execute the protocol with a man in the middle instead of the server
+def MITMProtocol(client, middle, email, password):
+	client.setup(middle, email, password)
+	middle.setup()
+	client.sendA()
+	middle.sendB()
+	client.KCalc()
+	client.sendHMAC()
+	middle.bruteforceHMAC()
 	
 # demo the SRP protocol working as intended
 def demoProtocol(email, password):
@@ -172,23 +178,11 @@ def demoProtocol(email, password):
 	server = serverSim()
 	SRPProtocol(client, server, email, password)
 	
-# demo the SRP protocol using the A = 0 exploit
-def demoProtocolZK(email, password):
-	client = clientSimZK()
-	server = serverSim()
-	SRPProtocol(client, server, email, password)
-	
-# demo the SRP protocol using the A = N exploit
-def demoProtocol1N(email, password):
-	client = clientSim1N()
-	server = serverSim()
-	SRPProtocol(client, server, email, password)
-	
-# demo the SRP protocol using the A = 2N exploit
-def demoProtocol2N(email, password):
-	client = clientSim2N()
-	server = serverSim()
-	SRPProtocol(client, server, email, password)
+# demo the SRP protocol working with a man in the middle
+def demoMITM(email, password):
+	client = clientSim()
+	middle = middleSim()
+	MITMProtocol(client, middle, email, password)
 	
 if __name__ == "__main__":
 	print("Enter your email: ")
@@ -196,8 +190,5 @@ if __name__ == "__main__":
 	print("Enter your password: ")
 	password = input()
 	
-	# pick one of these:
 	# demoProtocol(email, password)
-	demoProtocolZK(email, password)
-	# demoProtocol1N(email, password)
-	# demoProtocol2N(email, password)
+	demoMITM(email, password)
