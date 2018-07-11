@@ -37,10 +37,7 @@ def decrypt(cipherInt, d, n):
 	decodeInt = pow(cipherInt, d, n)
 	return decodeInt.to_bytes((decodeInt.bit_length() + 7) // 8, byteorder='big').decode('utf-8')
 	
-if __name__ == "__main__":
-
-	print("Generating RSA key...")
-	# ensure relative primality
+def generateKey():
 	e = 3
 	et = e
 	while not checkRelativelyPrime(e, et):
@@ -49,6 +46,12 @@ if __name__ == "__main__":
 		et = (p - 1) * (q - 1)
 	n = p * q
 	d = invmod(e, et)
+	return (e, n, d)
+	
+if __name__ == "__main__":
+
+	print("Generating RSA key...")
+	e, n, d = generateKey()
 	print("Generated!")
 	
 	print("Enter a string to encrypt:")
