@@ -2,9 +2,12 @@
 # Implement an E=3 RSA Broadcast attack
 
 import Challenge39
+from decimal import *
 
 if __name__ == "__main__":
-	secret = "crashb" # needs to be short
+	# needs to be high enough precision to calculate cube root
+	getcontext().prec = 100
+	secret = "yellow submarine"
 	
 	e1, n1, d1 = Challenge39.generateKey()
 	e2, n2, d2 = Challenge39.generateKey()
@@ -19,10 +22,11 @@ if __name__ == "__main__":
 	ms3 = n1 * n2
 	n123 = n1 * n2 * n3
 	
-	result = ((c1 * ms1 * Challenge39.invmod(ms1, n1)) +
+	rawResult = ((c1 * ms1 * Challenge39.invmod(ms1, n1)) +
 				(c2 * ms2 * Challenge39.invmod(ms2, n2)) +
 				(c3 * ms3 * Challenge39.invmod(ms3, n3))) % n123
-	result = int(result ** (1./3) + 0.5) # round to nearest int
+	decResult = Decimal(rawResult) ** (Decimal(1) / Decimal(3))
+	result = int(decResult.quantize(Decimal('1.'), rounding=ROUND_UP))
 				
 	plainText = result.to_bytes((result.bit_length() + 7) // 8, byteorder='big').decode('utf-8')
 	print("Decoded string: " + plainText)
