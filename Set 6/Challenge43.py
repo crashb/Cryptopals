@@ -78,7 +78,7 @@ def verifyDSA(m, r, s, y):
 def xFromK(m, k, r, s):
 	hashInt = int.from_bytes(SHA1(m), byteorder='big')
 	r_inv = invmod(r, q)
-	return (((s * k) - hashInt) * r_inv) % q
+	return ((((s * k) - hashInt) % q) * r_inv) % q
 		
 # test that params are set up correctly
 def testParams():
