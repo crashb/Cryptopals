@@ -5,7 +5,7 @@ import RSAUtils
 import random
 from Crypto.Util import number
 
-k = 32
+k = 96
 B = 2 ** (8 * (k - 2))
 
 # i had to write my own ceil function - math.ceil() was not behaving
@@ -36,7 +36,7 @@ def invmod(a, m):
 	
 # return a random prime number
 def getPrime():
-	return number.getPrime(128)
+	return number.getPrime(384)
 	
 def checkRelativelyPrime(a, b):
 	g = egcd(a, b)[0]
@@ -151,15 +151,19 @@ if __name__ == "__main__":
 	
 	# step 2
 	while not (len(M) == 1 and M[0][0] == M[0][1]):
+		print("Lower bound: " + str(M[0][0]))
+		print("Upper bound: " + str(M[0][1]))
+		print("Difference:  " + str(M[0][1] - M[0][0]))
 		if i == 1:
-			# print("Doing step 2a...")
+			print("Doing step 2a...")
 			s_i = step2a(c_0, e, n, d)
 		elif len(M) > 1:
-			# print("Doing step 2b...")
+			print("Doing step 2b...")
 			s_i = step2b(c_0, s_i, e, n, d)
 		else:
-			# print("Doing step 2c...")
+			print("Doing step 2c...")
 			s_i = step2c(c_0, s_i, M, e, n, d)
+		print("Doing step 3...")
 		M = step3(M, s_i, n)
 		i += 1
 		
