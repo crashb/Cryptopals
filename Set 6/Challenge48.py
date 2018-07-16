@@ -4,16 +4,22 @@
 import RSAUtils
 import random
 from Crypto.Util import number
-from math import ceil
 
 k = 32
 B = 2 ** (8 * (k - 2))
+
+# i had to write my own ceil function - math.ceil() was not behaving
+def ceil(a, b):
+	if a % b == 0:
+		return a // b
+	else:
+		return a // b + 1
 
 # generates a random sequence of bytes
 def getRandomBytes(length):
 	randomBytes = bytearray()
 	for i in range(0, length):
-		randomBytes.append(random.randint(0, 255))
+		randomBytes.append(random.randint(1, 255)) # not 0
 	return randomBytes
 
 def egcd(a, b):
@@ -73,13 +79,10 @@ def checkPadding(cipherInt, d, n):
 	
 # searches for s_1 > n/(3*B) such that multiplication is PKCS conformant
 def step2a(c, e, n, d):
-	s_1 = ceil(n / (3*B))
+	s_1 = ceil(n, 3*B)
 	while True:
 		cTest = multiplyCipher(c, s_1, e, n)
 		if checkPadding(cTest, d, n):
-			# show that step 2a is working
-			plainInt = pow(cTest, d, n)
-			print(plainInt.to_bytes(k, 'big'))
 			return s_1
 		s_1 += 1
 		
@@ -89,33 +92,25 @@ def step2b(c, lastS, e, n, d):
 	while True:
 		cTest = multiplyCipher(c, s_i, e, n)
 		if checkPadding(cTest, d, n):
-			# show that step 2b is working
-			plainInt = pow(cTest, d, n)
-			print(plainInt.to_bytes(k, 'big'))
 			return s_i
 		s_i += 1
 		
+# calculate s_i in a fast way so as to halve the distance
 def step2c(c, lastS, M, e, n, d):
 	a, b = M[0]
-	r_i = ceil(2 * (b*lastS - 2*B) / n)
+	r_i = ceil(2 * (b*lastS - 2*B), n)
 	while True:
-		s_min = ceil((2*B + r_i*n) / b)
-		s_max = (3*B + r_i*n) // a
+		s_min = ceil((2*B + r_i*n), b)
+		s_max = ceil((3*B + r_i*n), a)
 		for s_i in range(s_min, s_max):
 			cTest = multiplyCipher(c, s_i, e, n)
 			if checkPadding(cTest, d, n):
-				# show that step 2c is working
-				plainInt = pow(cTest, d, n)
-				print(plainInt.to_bytes(k, 'big'))
 				return s_i
 		r_i += 1
 		
-# from https://github.com/AdrS/cryptopals/blob/master/p47.py	
-def union_of_intervals(intervals):
-	'''takes list of overlapping closed intervals [(a_i, b_i)] where a_i <= b_i 
-	returns the union of of the intervals in sorted by a_i'''
-	union = []
-	#sort by left end of interval
+# get the union of a list of intervals
+def mergeIntervals(intervals):
+	merged = []
 	intervals.sort()
 	i = 0
 	while i < len(intervals):
@@ -126,25 +121,25 @@ def union_of_intervals(intervals):
 			if b_j > b_i:
 				b_i = b_j
 			j += 1
-		union.append((a_i, b_i))
+		merged.append((a_i, b_i))
 		i = j
-	return union
+	return merged
 		
 # narrow the set of solutions
 def step3(lastM, s_i, n):
 	M = []
 	
 	for a, b in lastM:
-		r_min = ceil((a*s_i - 3*B + 1) / n)
-		r_max = (b*s_i - 2*B) // n
+		r_min = ceil((a*s_i - 3*B + 1), n)
+		r_max = ceil((b*s_i - 2*B), n)
 		for r in range(r_min, r_max + 1):
-			newA = max(a, ceil((2*B + r*n) / s_i))
+			newA = max(a, ceil((2*B + r*n), s_i))
 			newB = min(b, (3*B - 1 + r*n) // s_i)
 			
 			if newA <= newB:
 				M.append((newA, newB))
 			
-	return union_of_intervals(M)
+	return mergeIntervals(M)
 
 if __name__ == "__main__":
 	secret = "kick it, CC"
@@ -156,19 +151,18 @@ if __name__ == "__main__":
 	
 	# step 2
 	while not (len(M) == 1 and M[0][0] == M[0][1]):
-		print("M: " + str(M))
-		print("Interval width: " + str(M[0][1] - M[0][0]))
 		if i == 1:
-			print("Doing step 2a...")
+			# print("Doing step 2a...")
 			s_i = step2a(c_0, e, n, d)
 		elif len(M) > 1:
-			print("Doing step 2b...")
+			# print("Doing step 2b...")
 			s_i = step2b(c_0, s_i, e, n, d)
 		else:
-			print("Doing step 2c...")
+			# print("Doing step 2c...")
 			s_i = step2c(c_0, s_i, M, e, n, d)
-		print("s_i: " + str(s_i))
-		print("Doing step 3...")
 		M = step3(M, s_i, n)
 		i += 1
-	print("got something")
+		
+	print("Decoded message:")
+	solution = M[0][0].to_bytes(k, 'big')
+	print(solution)
