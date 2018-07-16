@@ -93,7 +93,7 @@ def step2b(c, lastS, e, n, d):
 			plainInt = pow(cTest, d, n)
 			print(plainInt.to_bytes(k, 'big'))
 			return s_i
-		s_1 += 1
+		s_i += 1
 		
 def step2c(c, lastS, M, e, n, d):
 	a, b = M[0]
@@ -157,6 +157,7 @@ if __name__ == "__main__":
 	# step 2
 	while not (len(M) == 1 and M[0][0] == M[0][1]):
 		print("M: " + str(M))
+		print("Interval width: " + str(M[0][1] - M[0][0]))
 		if i == 1:
 			print("Doing step 2a...")
 			s_i = step2a(c_0, e, n, d)
