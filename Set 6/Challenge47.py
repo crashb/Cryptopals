@@ -4,16 +4,22 @@
 import RSAUtils
 import random
 from Crypto.Util import number
-from math import ceil
 
 k = 32
 B = 2 ** (8 * (k - 2))
+
+# i had to write my own ceil function - math.ceil() was not behaving
+def ceil(a, b):
+	if a % b == 0:
+		return a // b
+	else:
+		return a // b + 1
 
 # generates a random sequence of bytes
 def getRandomBytes(length):
 	randomBytes = bytearray()
 	for i in range(0, length):
-		randomBytes.append(random.randint(0, 255))
+		randomBytes.append(random.randint(1, 255)) # not 0
 	return randomBytes
 
 def egcd(a, b):
@@ -53,7 +59,6 @@ def generateKey():
 # pads a plaintext message to an int
 def makePadding(msg, e, n):
 	msgBytes = msg.encode('utf-8')
-	k = (n.bit_length() + 7) // 8  # get number of octets in n
 	ps = getRandomBytes(k - 3 - len(msgBytes))
 	eb = b'\x00\x02' + ps + b'\x00' + msgBytes
 	return int.from_bytes(eb, 'big')
@@ -69,81 +74,63 @@ def multiplyCipher(c, s, e, n):
 # decrypts RSA and determines if padding is valid
 def checkPadding(cipherInt, d, n):
 	plainInt = pow(cipherInt, d, n)
-	k = (n.bit_length() + 7) // 8  # get number of octets in n
 	plainBytes = plainInt.to_bytes(k, 'big')
 	return (plainBytes[0] == 0) and (plainBytes[1] == 2)
 	
-# step 2a - find s_1
-def getS1(c_0, e, n, d):
-	s = ceil(n / (3*B))
+# searches for s_1 > n/(3*B) such that multiplication is PKCS conformant
+def step2a(c, e, n, d):
+	s_1 = ceil(n, 3*B)
 	while True:
-		cTest = multiplyCipher(c_0, s, e, n)
+		cTest = multiplyCipher(c, s_1, e, n)
 		if checkPadding(cTest, d, n):
-			# show that step 2a worked
-			plainInt = pow(cTest, d, n)
-			print(plainInt.to_bytes(k, 'big'))
-			return s
-		s += 1
-	
-# step 2c - find s_i for one interval
-def getSi(M, c_0, s_0, e, n, d):
-	a = M[0]
-	b = M[1]
-	
-	s_i = s_0
-	r_i = 2 * ceil((b*s_i - 2*B) / n)
+			return s_1
+		s_1 += 1
+		
+# calculate s_i in a fast way so as to halve the distance
+def step2c(c, lastS, M, e, n, d):
+	a, b = M
+	r_i = ceil(2 * (b*lastS - 2*B), n)
 	while True:
-		s_i = ceil((2*B + r_i*n) / b)
-		while s_i < (3*B + r_i*n) // a:
-			cTest = multiplyCipher(c_0, s_i, e, n)
+		s_min = ceil((2*B + r_i*n), b)
+		s_max = ceil((3*B + r_i*n), a)
+		for s_i in range(s_min, s_max):
+			cTest = multiplyCipher(c, s_i, e, n)
 			if checkPadding(cTest, d, n):
-				# test that step 2c is working
-				plainInt = pow(cTest, d, n)
-				print(plainInt.to_bytes(k, 'big'))
 				return s_i
-			s_i += 1
 		r_i += 1
 		
-# step 3 - adjust boundaries based on s_i
-def boundCalc(M, s_i, n):
-	a = M[0]
-	b = M[1]
+# narrow the set of solutions
+def step3(lastM, s_i, n):	
+	a, b = lastM
+	r_min = ceil((a*s_i - 3*B + 1), n)
+	r_max = ceil((b*s_i - 2*B), n)
 	
-	r_min = ceil((a*s_i - 3*B + 1) / n)
-	r_max = (b*s_i - 2*B) // n
-	print('r_min: ' + str(r_min))
-	print('r_max: ' + str(r_max))
-	
-	r = r_min
-	newLow = max(a, ceil((2*B + r*n) / s_i))
-	
-	r = r_max
-	newHigh = min(b, (3*B - 1 + r*n) // s_i)
-	
-	return newLow, newHigh
+	for r in range(r_min, r_max + 1):
+		newA = max(a, ceil((2*B + r*n), s_i))
+		newB = min(b, (3*B - 1 + r*n) // s_i)
+		if newA <= newB:
+			return (newA, newB)
 
 if __name__ == "__main__":
-	# set up problem - pad and encrypt message
+	secret = "kick it, CC"
 	e, n, d = generateKey()
-	msg = "kick it, CC"
-	m_0 = makePadding(msg, e, n)
-	c_0 = encrypt(m_0, e, n)
-	
-	s_1 = getS1(c_0, e, n, d)
-	
+	padded = makePadding(secret, e, n)
+	c_0 = encrypt(padded, e, n)
 	M = (2*B, 3*B - 1)
-	print("Initial low bound:  " + str(M[0]))
-	print("Initial high bound: " + str(M[1]))
-	s_i = s_1
-	M = boundCalc(M, s_i, n)
-	print("Second low bound:  " + str(M[0]))
-	print("Second high bound: " + str(M[1]))
-	print("Difference:        " + str(M[1] - M[0]))
-	while M[0] != M[1]:
-		s_i = getSi(M, c_0, s_i, e, n, d)
-		print("s_i: " + str(s_i))
-		M = boundCalc(M, s_i, n)
-		print("Low bound:  " + str(M[0]))
-		print("High bound: " + str(M[1]))
-		print("Difference: " + str(M[1] - M[0]))
+	i = 1
 	
+	# step 2
+	while not (M[0] == M[1]):
+		if i == 1:
+			# print("Doing step 2a...")
+			s_i = step2a(c_0, e, n, d)
+		else:
+			# print("Doing step 2c...")
+			s_i = step2c(c_0, s_i, M, e, n, d)
+		# print("Doing step 3...")
+		M = step3(M, s_i, n)
+		i += 1
+		
+	print("Decoded message:")
+	solution = M[0].to_bytes(k, 'big')
+	print(solution)
