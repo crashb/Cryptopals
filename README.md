@@ -67,7 +67,7 @@ These are my solutions to the original 6 sets of [Cryptopals crypto challenges](
   - [x] 45. DSA parameter tampering
   - [x] 46. RSA parity oracle
   - [x] 47. Bleichenbacher's PKCS 1.5 Padding Oracle (Simple Case)
-  - [x] 48. Bleichenbacher's PKCS 1.5 Padding Oracle (Complete Case)]
+  - [x] 48. Bleichenbacher's PKCS 1.5 Padding Oracle (Complete Case)
   
 # Still to come
 
